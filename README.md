@@ -2,7 +2,7 @@
 
 A modern, cross-platform gRPC client desktop application built with Electron, TypeScript, and React. Think "Postman for gRPC" with automatic service discovery, streaming support, and a beautiful interface.
 
-![GRPCKit Interface](https://via.placeholder.com/800x500/2D3748/FFFFFF?text=GRPCKit+Interface)
+![GRPCKit Interface](./static/app.png)
 
 ## ✨ Features
 
