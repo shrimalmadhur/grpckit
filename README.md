@@ -120,8 +120,8 @@ Click the ⚙️ button in the sidebar to access:
 
 1. **Clone and install**
    ```bash
-   git clone https://github.com/shrimalmadhur/grpcui.git
-   cd grpcui
+   git clone https://github.com/shrimalmadhur/grpckit.git
+   cd grpckit
    npm install
    ```
 
@@ -138,7 +138,7 @@ Click the ⚙️ button in the sidebar to access:
 ### 📁 Project Structure
 
 ```
-grpcui/
+grpckit/
 ├── src/
 │   ├── main/                    # Electron main process
 │   │   ├── main.ts             # App entry point & window management
