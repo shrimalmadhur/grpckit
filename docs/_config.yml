@@ -1,0 +1,39 @@
+title: GRPCKit
+description: Modern gRPC Client for Desktop
+url: https://shrimalmadhur.github.io
+baseurl: /grpckit
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - LICENSE
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# Include files
+include:
+  - _pages
+
+# Plugin settings
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# SEO settings
+author: GRPCKit Team
+social:
+  name: GRPCKit
+  links:
+    - https://github.com/shrimalmadhur/grpckit
+
+# Site settings
+lang: en
+timezone: UTC 
