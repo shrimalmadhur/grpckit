@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAnimations();
     initializeDownloadTracking();
     initializeThemeDetection();
+    initializeDynamicYear();
     
     // Add loading complete class
     document.body.classList.add('loaded');
@@ -213,6 +214,15 @@ function initializeThemeDetection() {
     
     // Initial theme setup
     updateTheme(darkModeMediaQuery.matches);
+}
+
+// Dynamic Year
+function initializeDynamicYear() {
+    const currentYearElement = document.getElementById('current-year');
+    if (currentYearElement) {
+        const currentYear = new Date().getFullYear();
+        currentYearElement.textContent = currentYear;
+    }
 }
 
 // Update theme
