@@ -1,10 +1,29 @@
 export interface GrpcApi {
-  connect: (url: string, options?: any) => Promise<{ success: boolean; error?: string }>;
+  connect: (
+    url: string,
+    options?: any
+  ) => Promise<{ success: boolean; error?: string }>;
   disconnect: () => Promise<void>;
-  discover: () => Promise<{ success: boolean; services?: any[]; error?: string }>;
-  invokeUnary: (serviceName: string, methodName: string, request: any, options?: any) => Promise<{ success: boolean; response?: any; error?: string }>;
-  invokeStream: (serviceName: string, methodName: string, request: any, options?: any) => Promise<{ success: boolean; error?: string }>;
-  importProto: (filePath: string) => Promise<{ success: boolean; error?: string }>;
+  discover: () => Promise<{
+    success: boolean;
+    services?: any[];
+    error?: string;
+  }>;
+  invokeUnary: (
+    serviceName: string,
+    methodName: string,
+    request: any,
+    options?: any
+  ) => Promise<{ success: boolean; response?: any; error?: string }>;
+  invokeStream: (
+    serviceName: string,
+    methodName: string,
+    request: any,
+    options?: any
+  ) => Promise<{ success: boolean; error?: string }>;
+  importProto: (
+    filePath: string
+  ) => Promise<{ success: boolean; services?: any[]; error?: string }>;
 }
 
 export interface StoreApi {
@@ -30,4 +49,4 @@ declare global {
       duration?: number;
     }) => void;
   }
-} 
+}

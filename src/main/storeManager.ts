@@ -121,13 +121,19 @@ export class StoreManager {
       id: Math.random().toString(36).substr(2, 9),
     };
 
-    this.environmentsStore.set('environments', [...environments, newEnvironment]);
+    this.environmentsStore.set('environments', [
+      ...environments,
+      newEnvironment,
+    ]);
   }
 
-  updateEnvironment(id: string, updates: Partial<Omit<Environment, 'id'>>): void {
+  updateEnvironment(
+    id: string,
+    updates: Partial<Omit<Environment, 'id'>>
+  ): void {
     const environments = this.getEnvironments();
-    const index = environments.findIndex(env => env.id === id);
-    
+    const index = environments.findIndex((env) => env.id === id);
+
     if (index !== -1 && environments[index]) {
       const currentEnv = environments[index];
       const updatedEnvironment: Environment = {
@@ -142,7 +148,7 @@ export class StoreManager {
 
   deleteEnvironment(id: string): void {
     const environments = this.getEnvironments();
-    const filtered = environments.filter(env => env.id !== id);
+    const filtered = environments.filter((env) => env.id !== id);
     this.environmentsStore.set('environments', filtered);
   }
 
@@ -153,7 +159,7 @@ export class StoreManager {
 
   addRecentConnection(url: string): void {
     const connections = this.getRecentConnections();
-    const filtered = connections.filter(conn => conn !== url);
+    const filtered = connections.filter((conn) => conn !== url);
     const updated = [url, ...filtered].slice(0, 10); // Keep last 10
     this.connectionsStore.set('recentConnections', updated);
   }
@@ -204,4 +210,4 @@ export class StoreManager {
         break;
     }
   }
-} 
+}

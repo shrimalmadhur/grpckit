@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain, Menu, dialog } from 'electron';
 import * as path from 'path';
 import { GrpcEngine } from './grpcEngine';
 import { StoreManager } from './storeManager';
-import * as fs from 'fs';
 
 let mainWindow: BrowserWindow | null = null;
 let grpcEngine: GrpcEngine;
@@ -13,11 +12,6 @@ console.log('Current directory:', process.cwd());
 console.log('__dirname:', __dirname);
 console.log('Node version:', process.version);
 console.log('Platform:', process.platform);
-
-const logFile = '/tmp/grpckit-debug.log';
-function fileLog(...args: any[]) {
-  fs.appendFileSync(logFile, args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n');
-}
 
 function createWindow(): void {
   console.log('Creating BrowserWindow...');
@@ -36,7 +30,7 @@ function createWindow(): void {
       show: true, // Force show immediately for debugging
     });
 
-            const rendererPath = path.join(__dirname, '..', 'renderer.html');
+    const rendererPath = path.join(__dirname, '..', 'renderer.html');
     console.log('Loading renderer.html from:', rendererPath);
     mainWindow.loadFile(rendererPath).catch((err) => {
       console.error('Failed to load renderer.html:', err);
@@ -51,9 +45,12 @@ function createWindow(): void {
       mainWindow = null;
     });
 
-    mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
-      console.error('Failed to load page:', errorCode, errorDescription);
-    });
+    mainWindow.webContents.on(
+      'did-fail-load',
+      (_event, errorCode, errorDescription) => {
+        console.error('Failed to load page:', errorCode, errorDescription);
+      }
+    );
 
     // Development: Open DevTools
     if (process.env['NODE_ENV'] === 'development') {
@@ -78,7 +75,10 @@ function createMenu(): void {
               filters: [{ name: 'Protocol Buffers', extensions: ['proto'] }],
             });
             if (!result.canceled && result.filePaths.length > 0) {
-              mainWindow?.webContents.send('proto-file-imported', result.filePaths[0]);
+              mainWindow?.webContents.send(
+                'proto-file-imported',
+                result.filePaths[0]
+              );
             }
           },
         },
@@ -117,10 +117,7 @@ function createMenu(): void {
     },
     {
       label: 'Window',
-      submenu: [
-        { role: 'minimize' },
-        { role: 'close' },
-      ],
+      submenu: [{ role: 'minimize' }, { role: 'close' }],
     },
   ];
 
@@ -135,7 +132,10 @@ function setupIpcHandlers(): void {
       await grpcEngine.connect(url, options);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   });
 
@@ -144,40 +144,78 @@ function setupIpcHandlers(): void {
       await grpcEngine.disconnect();
       return { success: true };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   });
 
   // Service Discovery
   ipcMain.handle('grpc-discover', async () => {
-    fileLog('[main.ts] grpc-discover IPC handler called');
     try {
       const services = await grpcEngine.discover();
       return { success: true, services };
     } catch (error) {
-      fileLog('[main.ts] grpc-discover error', error);
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   });
 
   // Method Invocation
-  ipcMain.handle('grpc-invoke-unary', async (_, serviceName: string, methodName: string, request: any, options: any) => {
-    try {
-      const response = await grpcEngine.invokeUnary(serviceName, methodName, request, options);
-      return { success: true, response };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  ipcMain.handle(
+    'grpc-invoke-unary',
+    async (
+      _,
+      serviceName: string,
+      methodName: string,
+      request: any,
+      options: any
+    ) => {
+      try {
+        const response = await grpcEngine.invokeUnary(
+          serviceName,
+          methodName,
+          request,
+          options
+        );
+        return { success: true, response };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        };
+      }
     }
-  });
+  );
 
-  ipcMain.handle('grpc-invoke-stream', async (_, serviceName: string, methodName: string, request: any, options: any) => {
-    try {
-      const stream = await grpcEngine.invokeStream(serviceName, methodName, request, options);
-      return { success: true, streamId: stream.id };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  ipcMain.handle(
+    'grpc-invoke-stream',
+    async (
+      _,
+      serviceName: string,
+      methodName: string,
+      request: any,
+      options: any
+    ) => {
+      try {
+        const stream = await grpcEngine.invokeStream(
+          serviceName,
+          methodName,
+          request,
+          options
+        );
+        return { success: true, streamId: stream.id };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        };
+      }
     }
-  });
+  );
 
   // Store Management
   ipcMain.handle('store-get', async (_, key: string) => {
@@ -197,35 +235,41 @@ function setupIpcHandlers(): void {
   // Proto File Import
   ipcMain.handle('proto-import', async (_, filePath: string) => {
     try {
-      const result = await grpcEngine.importProto(filePath);
-      return { success: true, result };
+      const services = await grpcEngine.importProto(filePath);
+      return { success: true, services: services };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   });
 }
 
-app.whenReady().then(() => {
-  console.log('App is ready');
-  try {
-    grpcEngine = new GrpcEngine();
-    storeManager = new StoreManager();
+app
+  .whenReady()
+  .then(() => {
+    console.log('App is ready');
+    try {
+      grpcEngine = new GrpcEngine();
+      storeManager = new StoreManager();
 
-    createWindow();
-    createMenu();
-    setupIpcHandlers();
+      createWindow();
+      createMenu();
+      setupIpcHandlers();
 
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-      }
-    });
-  } catch (error) {
-    console.error('Error during app initialization:', error);
-  }
-}).catch((error) => {
-  console.error('Error in app.whenReady():', error);
-});
+      app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+          createWindow();
+        }
+      });
+    } catch (error) {
+      console.error('Error during app initialization:', error);
+    }
+  })
+  .catch((error) => {
+    console.error('Error in app.whenReady():', error);
+  });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -237,4 +281,4 @@ app.on('before-quit', async () => {
   if (grpcEngine) {
     await grpcEngine.disconnect();
   }
-}); 
+});

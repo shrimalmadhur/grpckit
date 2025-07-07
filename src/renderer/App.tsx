@@ -23,17 +23,17 @@ const App: React.FC = () => {
       storeApi: typeof window !== 'undefined' && !!window.storeApi,
       appApi: typeof window !== 'undefined' && !!window.appApi,
     });
-    
+
     // Initialize app with timeout protection
     const initializeApp = async () => {
       try {
         console.log('Starting app initialization...');
-        
+
         // Set a timeout to ensure we don't get stuck
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Initialization timeout')), 3000);
         });
-        
+
         const initPromise = (async () => {
           // Load settings on app start
           console.log('Loading settings...');
@@ -44,21 +44,21 @@ const App: React.FC = () => {
             console.error('Settings loading failed:', settingsError);
             // Continue anyway
           }
-          
+
           // Set up proto file import listener
           if (typeof window !== 'undefined' && window.appApi) {
             console.log('Setting up proto file listener...');
-            window.appApi.onProtoFileImported((filePath) => {
+            window.appApi.onProtoFileImported(async (filePath) => {
               console.log('Proto file imported:', filePath);
-              // Handle proto file import
+              await handleProtoFileImport(filePath);
             });
           } else {
             console.log('appApi not available');
           }
         })();
-        
+
         await Promise.race([initPromise, timeoutPromise]);
-        
+
         console.log('Setting isReady to true...');
         setIsReady(true);
         console.log('App initialized successfully');
@@ -80,7 +80,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Apply theme
-    if (settings.theme === 'dark' || (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (
+      settings.theme === 'dark' ||
+      (settings.theme === 'system' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -118,13 +122,95 @@ const App: React.FC = () => {
     }
   };
 
+  const handleProtoFileImport = async (filePath: string) => {
+    try {
+      console.log('Importing proto file:', filePath);
+
+      if (typeof window !== 'undefined' && window.grpcApi) {
+        // Import the proto file
+        const importResult = await window.grpcApi.importProto(filePath);
+        console.log('Proto import result:', importResult);
+
+        if (importResult.success) {
+          console.log('Proto file imported successfully');
+
+          if (importResult.services && importResult.services.length > 0) {
+            // Update the services in the app store
+            console.log('Updating services in store:', importResult.services);
+            const { setServices } = useAppStore.getState();
+            setServices(importResult.services);
+
+            // Debug: Check store state after update
+            const updatedState = useAppStore.getState();
+            console.log(
+              'Store state after setServices:',
+              updatedState.connection.services
+            );
+
+            // Ensure we're on the main view to see services
+            if (currentView !== 'main') {
+              console.log('Switching to main view to show imported services');
+              setCurrentView('main');
+              setIsConnected(true);
+            }
+
+            // Show success notification
+            if ((window as any).showNotification) {
+              (window as any).showNotification({
+                type: 'success',
+                title: 'Proto file imported',
+                message: `Successfully imported ${filePath.split('/').pop()} with ${importResult.services.length} service(s)`,
+              });
+            }
+          } else {
+            console.log(
+              'Proto file imported but no services found:',
+              importResult
+            );
+            // Show warning - import succeeded but no services found
+            if ((window as any).showNotification) {
+              (window as any).showNotification({
+                type: 'warning',
+                title: 'Proto file imported',
+                message:
+                  'Proto file imported but no services found in the file.',
+              });
+            }
+          }
+        } else {
+          throw new Error(importResult.error || 'Failed to import proto file');
+        }
+      } else {
+        throw new Error('gRPC API not available');
+      }
+    } catch (error) {
+      console.error('Proto file import failed:', error);
+
+      // Show error notification
+      if ((window as any).showNotification) {
+        (window as any).showNotification({
+          type: 'error',
+          title: 'Proto import failed',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Failed to import proto file',
+        });
+      }
+    }
+
+    console.log('Proto file import process completed');
+  };
+
   // Show loading state while initializing
   if (!isReady) {
     return (
       <div className="h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Initializing GRPCKit...</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Initializing GRPCKit...
+          </p>
         </div>
       </div>
     );
@@ -158,12 +244,14 @@ const App: React.FC = () => {
             </div>
             <div className="mt-2 flex items-center">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Connected</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Connected
+              </span>
             </div>
           </div>
-          
+
           <ServiceExplorer />
-          
+
           <div className="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={handleDisconnect}
@@ -182,7 +270,7 @@ const App: React.FC = () => {
               <RequestBuilder />
               <ResponsePanel />
             </div>
-            
+
             {/* Stream Console */}
             <div className="w-80 border-l border-gray-200 dark:border-gray-700">
               <StreamConsole />
@@ -196,11 +284,14 @@ const App: React.FC = () => {
 
       {/* Notification Manager */}
       <NotificationManager />
-      
+
       {/* Settings Panel */}
-      <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </>
   );
 };
 
-export default App; 
+export default App;

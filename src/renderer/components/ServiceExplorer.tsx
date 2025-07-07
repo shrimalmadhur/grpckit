@@ -6,6 +6,16 @@ const ServiceExplorer: React.FC = () => {
   const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[ServiceExplorer] Connection state changed:', {
+      isConnected: connection.isConnected,
+      servicesCount: connection.services?.length || 0,
+      services: connection.services,
+      discoveryError: connection.discoveryError
+    });
+  }, [connection]);
+
   const toggleService = (serviceName: string) => {
     const newExpanded = new Set(expandedServices);
     if (newExpanded.has(serviceName)) {

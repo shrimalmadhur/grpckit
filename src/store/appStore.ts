@@ -47,7 +47,7 @@ interface AppStore {
   settings: AppSettings;
   loadSettings: () => Promise<void>;
   updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
-  
+
   // Connection
   connection: ConnectionState;
   connect: (url: string, options?: any) => Promise<void>;
@@ -55,14 +55,14 @@ interface AppStore {
   setServices: (services: GrpcService[]) => void;
   selectService: (serviceName: string) => void;
   selectMethod: (methodName: string) => void;
-  
+
   // Request/Response
   request: RequestState;
   response: ResponseState;
   updateRequest: (updates: Partial<RequestState>) => void;
   setResponse: (response: ResponseState) => void;
   clearResponse: () => void;
-  
+
   // History
   history: any[];
   addToHistory: (item: any) => void;
@@ -94,7 +94,7 @@ const defaultResponse: ResponseState = {};
 export const useAppStore = create<AppStore>((set, get) => ({
   // Settings
   settings: defaultSettings,
-  
+
   loadSettings: async () => {
     try {
       if (typeof window !== 'undefined' && window.storeApi) {
@@ -107,7 +107,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       console.error('Failed to load settings:', error);
     }
   },
-  
+
   updateSettings: async (updates) => {
     const newSettings = { ...get().settings, ...updates };
     set({ settings: newSettings });
@@ -119,10 +119,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
       console.error('Failed to save settings:', error);
     }
   },
-  
+
   // Connection
   connection: defaultConnection,
-  
+
   connect: async (url, options) => {
     try {
       if (typeof window !== 'undefined' && window.grpcApi) {
@@ -151,7 +151,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
                 isConnected: true,
                 url,
                 services: [],
-                discoveryError: discoveryResult.error || 'No services discovered',
+                discoveryError:
+                  discoveryResult.error || 'No services discovered',
               },
             });
           }
@@ -169,13 +170,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
           isConnected: false,
           url,
           services: [],
-          discoveryError: error instanceof Error ? error.message : String(error),
+          discoveryError:
+            error instanceof Error ? error.message : String(error),
         },
       });
       throw error;
     }
   },
-  
+
   disconnect: async () => {
     try {
       if (typeof window !== 'undefined' && window.grpcApi) {
@@ -186,53 +188,62 @@ export const useAppStore = create<AppStore>((set, get) => ({
       console.error('Disconnect failed:', error);
     }
   },
-  
+
   setServices: (services) => {
     set((state) => ({
-      connection: { ...state.connection, services },
+      connection: {
+        ...state.connection,
+        services,
+        isConnected: true, // Set connected to true when services are loaded from proto
+        discoveryError: undefined, // Clear any previous errors
+      },
     }));
   },
-  
+
   selectService: (serviceName) => {
     set((state) => ({
-      connection: { ...state.connection, selectedService: serviceName, selectedMethod: undefined as string | undefined },
+      connection: {
+        ...state.connection,
+        selectedService: serviceName,
+        selectedMethod: undefined as string | undefined,
+      },
     }));
   },
-  
+
   selectMethod: (methodName) => {
     set((state) => ({
       connection: { ...state.connection, selectedMethod: methodName },
     }));
   },
-  
+
   // Request/Response
   request: defaultRequest,
   response: defaultResponse,
-  
+
   updateRequest: (updates) => {
     set((state) => ({
       request: { ...state.request, ...updates },
     }));
   },
-  
+
   setResponse: (response) => {
     set({ response });
   },
-  
+
   clearResponse: () => {
     set({ response: defaultResponse });
   },
-  
+
   // History
   history: [],
-  
+
   addToHistory: (item) => {
     set((state) => ({
       history: [item, ...state.history].slice(0, 100), // Keep last 100 items
     }));
   },
-  
+
   clearHistory: () => {
     set({ history: [] });
   },
-})); 
+}));

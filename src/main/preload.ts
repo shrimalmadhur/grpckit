@@ -41,14 +41,14 @@ contextBridge.exposeInMainWorld('grpcApi', {
   // Connection management
   connect: (url: string, options: ConnectionOptions): Promise<GrpcResponse> =>
     ipcRenderer.invoke('grpc-connect', url, options),
-  
+
   disconnect: (): Promise<GrpcResponse> =>
     ipcRenderer.invoke('grpc-disconnect'),
-  
+
   // Service discovery
   discover: (): Promise<DiscoveryResponse> =>
     ipcRenderer.invoke('grpc-discover'),
-  
+
   // Method invocation
   invokeUnary: (
     serviceName: string,
@@ -56,29 +56,40 @@ contextBridge.exposeInMainWorld('grpcApi', {
     request: any,
     options: { metadata?: Record<string, string>; deadline?: number } = {}
   ): Promise<GrpcResponse> =>
-    ipcRenderer.invoke('grpc-invoke-unary', serviceName, methodName, request, options),
-  
+    ipcRenderer.invoke(
+      'grpc-invoke-unary',
+      serviceName,
+      methodName,
+      request,
+      options
+    ),
+
   invokeStream: (
     serviceName: string,
     methodName: string,
     request: any,
     options: { metadata?: Record<string, string>; deadline?: number } = {}
   ): Promise<GrpcResponse> =>
-    ipcRenderer.invoke('grpc-invoke-stream', serviceName, methodName, request, options),
-  
+    ipcRenderer.invoke(
+      'grpc-invoke-stream',
+      serviceName,
+      methodName,
+      request,
+      options
+    ),
+
   // Proto file import
-  importProto: (filePath: string): Promise<GrpcResponse> =>
+  importProto: (filePath: string): Promise<DiscoveryResponse> =>
     ipcRenderer.invoke('proto-import', filePath),
 });
 
 contextBridge.exposeInMainWorld('storeApi', {
   // Store operations
-  get: (key: string): Promise<any> =>
-    ipcRenderer.invoke('store-get', key),
-  
+  get: (key: string): Promise<any> => ipcRenderer.invoke('store-get', key),
+
   set: (key: string, value: any): Promise<{ success: boolean }> =>
     ipcRenderer.invoke('store-set', key, value),
-  
+
   delete: (key: string): Promise<{ success: boolean }> =>
     ipcRenderer.invoke('store-delete', key),
 });
@@ -86,9 +97,11 @@ contextBridge.exposeInMainWorld('storeApi', {
 contextBridge.exposeInMainWorld('appApi', {
   // App-specific operations
   onProtoFileImported: (callback: (filePath: string) => void) => {
-    ipcRenderer.on('proto-file-imported', (_, filePath: string) => callback(filePath));
+    ipcRenderer.on('proto-file-imported', (_, filePath: string) =>
+      callback(filePath)
+    );
   },
-  
+
   removeAllListeners: (channel: string) => {
     ipcRenderer.removeAllListeners(channel);
   },
@@ -98,7 +111,10 @@ contextBridge.exposeInMainWorld('appApi', {
 declare global {
   interface Window {
     grpcApi: {
-      connect: (url: string, options: ConnectionOptions) => Promise<GrpcResponse>;
+      connect: (
+        url: string,
+        options: ConnectionOptions
+      ) => Promise<GrpcResponse>;
       disconnect: () => Promise<GrpcResponse>;
       discover: () => Promise<DiscoveryResponse>;
       invokeUnary: (
@@ -113,7 +129,7 @@ declare global {
         request: any,
         options?: { metadata?: Record<string, string>; deadline?: number }
       ) => Promise<GrpcResponse>;
-      importProto: (filePath: string) => Promise<GrpcResponse>;
+      importProto: (filePath: string) => Promise<DiscoveryResponse>;
     };
     storeApi: {
       get: (key: string) => Promise<any>;
@@ -125,4 +141,4 @@ declare global {
       removeAllListeners: (channel: string) => void;
     };
   }
-} 
+}
